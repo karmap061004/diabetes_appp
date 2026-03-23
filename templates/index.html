@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🩺 Diabetes Prediction App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        input[type="range"] {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="range"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="range"] {
+            padding: 8px;
+        }
+
+        .value-display {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 30px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .probability {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .risk-badge.low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .risk-badge.moderate {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-badge.high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .result.low-risk {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .result.moderate-risk {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .result.high-risk {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .warning-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🩺 Diabetes Prediction App</h1>
+            <p class="subtitle">Enter patient details to check diabetes risk</p>
+        </div>
+
+        <form id="predictionForm">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="pregnancies">Pregnancies</label>
+                    <input type="number" id="pregnancies" name="pregnancies" min="0" max="20" value="1">
+                </div>
+
+                <div class="input-group">
+                    <label for="glucose">Glucose <span class="value-display" id="glucoseVal">120</span></label>
+                    <input type="range" id="glucose" name="glucose" min="0" max="200" value="120">
+                </div>
+
+                <div class="input-group">
+                    <label for="bp">Blood Pressure <span class="value-display" id="bpVal">70</span></label>
+                    <input type="range" id="bp" name="bp" min="0" max="150" value="70">
+                </div>
+
+                <div class="input-group">
+                    <label for="skin">Skin Thickness <span class="value-display" id="skinVal">20</span></label>
+                    <input type="range" id="skin" name="skin" min="0" max="100" value="20">
+                </div>
+
+                <div class="input-group">
+                    <label for="insulin">Insulin <span class="value-display" id="insulinVal">80</span></label>
+                    <input type="range" id="insulin" name="insulin" min="0" max="900" value="80">
+                </div>
+
+                <div class="input-group">
+                    <label for="bmi">BMI <span class="value-display" id="bmiVal">25.0</span></label>
+                    <input type="range" id="bmi" name="bmi" min="0" max="70" step="0.1" value="25">
+                </div>
+
+                <div class="input-group">
+                    <label for="dpf">Diabetes Pedigree Function <span class="value-display" id="dpfVal">0.5</span></label>
+                    <input type="range" id="dpf" name="dpf" min="0" max="3" step="0.1" value="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label for="age">Age <span class="value-display" id="ageVal">30</span></label>
+                    <input type="range" id="age" name="age" min="1" max="120" value="30">
+                </div>
+            </div>
+
+            <button type="submit">🔍 Predict</button>
+        </form>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="result" class="result">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="probability" id="probabilityText"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="risk-badge" id="riskBadge"></div>
+        </div>
+
+        <div class="warning-text">
+            ⚠️ This is a demo ML model. Not a medical diagnosis.
+        </div>
+    </div>
+
+    <script>
+        // Update range slider display values
+        const rangeInputs = ['glucose', 'bp', 'skin', 'insulin', 'bmi', 'dpf', 'age'];
+        
+        rangeInputs.forEach(id => {
+            const input = document.getElementById(id);
+            const display = document.getElementById(id + 'Val');
+            
+            input.addEventListener('input', function() {
+                const step = input.step ? parseFloat(input.step) : 1;
+                if (step < 1) {
+                    display.textContent = parseFloat(this.value).toFixed(1);
+                } else {
+                    display.textContent = this.value;
+                }
+            });
+        });
+
+        // Form submission
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const formData = new FormData(this);
+                const data = {
+                    pregnancies: parseInt(formData.get('pregnancies')),
+                    glucose: parseInt(formData.get('glucose')),
+                    bp: parseInt(formData.get('bp')),
+                    skin: parseInt(formData.get('skin')),
+                    insulin: parseInt(formData.get('insulin')),
+                    bmi: parseFloat(formData.get('bmi')),
+                    dpf: parseFloat(formData.get('dpf')),
+                    age: parseInt(formData.get('age'))
+                };
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Prediction failed');
+                }
+
+                const result_data = await response.json();
+                
+                const pct = Math.round(result_data.probability * 100);
+                const riskLevel = result_data.risk_level;
+                const riskColor = result_data.risk_color;
+
+                // Update result display
+                const resultTitle = document.getElementById('resultTitle');
+                if (result_data.prediction === 1) {
+                    resultTitle.textContent = '⚠️ High Risk of Diabetes';
+                } else {
+                    resultTitle.textContent = '✅ Low Risk';
+                }
+
+                document.getElementById('probabilityText').textContent = `Probability: ${result_data.probability.toFixed(4)}`;
+                document.getElementById('progressFill').style.width = pct + '%';
+                
+                const riskBadge = document.getElementById('riskBadge');
+                riskBadge.textContent = riskLevel;
+                riskBadge.className = 'risk-badge ' + riskColor;
+
+                result.className = 'result show ' + riskColor + '-risk';
+
+            } catch (error) {
+                document.getElementById('resultTitle').textContent = '❌ Error';
+                document.getElementById('probabilityText').textContent = error.message;
+                result.className = 'result show error';
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
